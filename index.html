@@ -1,0 +1,286 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>اختبار الكيبورد والماوس أونلاين ثلاثي الأبعاد | Keyboard Test & Double Click Test</title>
+<meta name="description" content="افحص الكيبورد والماوس مجاناً بدون تسجيل: كاشف تعليق الأزرار والدبل كليك، اختبار NKRO، معدل استجابة الماوس بالهرتز، وأصوات سويتشات ميكانيكية ASMR على كيبورد ثلاثي الأبعاد.">
+<meta property="og:title" content="اختبار الكيبورد والماوس أونلاين ثلاثي الأبعاد">
+<meta property="og:description" content="كاشف تعليق الأزرار + NKRO + Polling Rate + أصوات ASMR، كله في صفحة واحدة.">
+<meta property="og:type" content="website">
+<script type="application/ld+json">{"@context":"https://schema.org","@type":"FAQPage","mainEntity":[{"@type":"Question","name":"كيف أختبر الكيبورد أونلاين؟","acceptedAnswer":{"@type":"Answer","text":"اضغط أي زر في الكيبورد. إذا أضاء الزر المقابل في الكيبورد ثلاثي الأبعاد فهو يعمل، وإذا لم يضئ فهو معطوب أو غير مدعوم من المتصفح."}},{"@type":"Question","name":"ما هو تعليق السويتش (Chattering)؟","acceptedAnswer":{"@type":"Answer","text":"هو تسجيل ضغطتين من ضغطة واحدة بفارق زمني صغير جداً، وغالباً يدل على اهتراء السويتش. تقيس الصفحة الزمن بين ضغطتين لنفس الزر وتنبه إذا قل عن الحد المحدد."}},{"@type":"Question","name":"كيف أعرف معدل استجابة الماوس بالهرتز؟","acceptedAnswer":{"@type":"Answer","text":"حرّك الماوس بسرعة داخل الصفحة وستعرض الصفحة أعلى معدل أحداث في الثانية وتقربه إلى 125 أو 250 أو 500 أو 1000 هرتز."}}]}</script>
+<link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;700;900&family=JetBrains+Mono:wght@500;800&display=swap" rel="stylesheet">
+<script src="https://cdn.tailwindcss.com/3.4.17"></script>
+<style>
+:root{--bg:#0f1520;--cyan:#86d3c9;--emerald:#93c9a4;--rose:#ea9090;--volt:#e8d5a5;--text:#dfe6ee;--mut:#8d9bb0;color-scheme:dark;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+html,body{height:100%;margin:0;background:var(--bg);color:var(--text);font-family:'Cairo',system-ui,sans-serif;overflow:hidden}
+#gl{position:fixed;inset:0}
+.hud{pointer-events:none}.hud>*{pointer-events:auto}
+:root.light{--bg:#f2efe9;--text:#27303d;--mut:#667085;--cyan:#2a8a86;--emerald:#3f8f67;--rose:#c25a5a;--volt:#a47c2c;color-scheme:light}
+.light .glass{background:rgba(255,255,255,.72);border-color:rgba(0,0,0,.1)}
+.light .btn{background:rgba(0,0,0,.04);border-color:rgba(0,0,0,.18)}
+select.btn option{color:#10142a;background:#fff}
+.glass{background:rgba(26,36,52,.58);backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);border:1px solid rgba(255,255,255,.08);border-radius:14px}
+.mono{font-family:'JetBrains Mono',ui-monospace,monospace;direction:ltr;unicode-bidi:isolate}
+.btn{border:1px solid rgba(255,255,255,.1);border-radius:10px;padding:.35rem .6rem;font-size:.78rem;font-weight:700;background:rgba(255,255,255,.04);color:var(--text);cursor:pointer}
+.btn:hover{border-color:var(--cyan)}.btn.on{border-color:var(--cyan);color:var(--cyan);background:color-mix(in srgb,var(--cyan) 14%,transparent)}input[type=range]{accent-color:var(--cyan)!important}
+.btn:focus-visible,input:focus-visible{outline:2px solid var(--volt);outline-offset:2px}
+.k{font-size:.7rem;color:var(--mut)}.chip{font-size:.74rem;font-weight:700;padding:.3rem .5rem;border-radius:8px;border:1px solid rgba(255,255,255,.12);color:var(--mut)}.chip.t{color:var(--emerald);border-color:var(--emerald)}.chip.p{color:#000;background:var(--cyan);border-color:var(--cyan)}.chip.f{color:#2b1414;background:var(--rose);border-color:var(--rose)}.v{font-size:1.5rem;font-weight:800;line-height:1.1}
+#log div{font-size:.72rem;padding:2px 0;border-bottom:1px solid rgba(255,255,255,.05)}
+</style>
+</head>
+<body>
+<canvas id="gl"></canvas>
+
+<div class="hud fixed inset-x-0 top-0 p-2 md:p-4" style="padding-top:calc(env(safe-area-inset-top,0px) + .5rem)">
+  <div class="grid grid-cols-2 md:grid-cols-4 gap-2 max-w-5xl mx-auto">
+    <div class="glass p-3"><div class="k">آخر زمن بين ضغطتين Δt</div><div class="v mono" id="mDt" style="color:var(--cyan)">— ms</div></div>
+    <div class="glass p-3"><div class="k">أقصى ضغطات متزامنة (Simultaneous Keys)</div><div class="v mono" id="mNk" style="color:var(--volt)">0</div></div>
+    <div class="glass p-3"><div class="k">معدل استجابة الماوس (الأقصى)</div><div class="v mono" id="mHz" style="color:var(--volt)">— Hz</div><div class="k mono" id="mHzLive">live: 0 Hz</div></div>
+    <div class="glass p-3"><div class="k">الكيبورد: مفحوص / أعطال</div><div class="v mono"><span id="mTested" style="color:var(--emerald)">0/77</span> <span id="mFault" style="color:var(--rose)">0</span></div><div class="k"><span id="mMouse">ماوس 0/5</span> · <span id="mScroll">قفزات السكرول: 0</span></div></div>
+  </div>
+</div>
+
+<div class="hud fixed left-2 top-44 md:top-32"><div id="mouseHud" class="glass p-2 flex flex-col gap-1" style="width:8.5rem"><div class="k mb-1">اختبار الماوس: اضغط كل زر، لفّ العجلة لأعلى وأسفل، وحرّك الماوس</div></div></div>
+
+<div class="hud fixed right-2 top-44 md:top-32"><div class="glass p-2 text-center" style="width:8.5rem"><div class="k">آخر زر ضغطته</div><div class="v mono" id="lkKey" style="font-size:1.1rem;word-break:break-all">—</div><div class="k mono" id="lkCode">code: —</div><div class="k mono" id="lkKc">keyCode: —</div></div></div>
+
+<div class="hud fixed inset-x-0 bottom-0 p-2 md:p-4" style="padding-bottom:calc(env(safe-area-inset-bottom,0px) + .5rem)">
+  <div class="grid md:grid-cols-3 gap-2 max-w-5xl mx-auto" style="max-height:42vh;overflow-y:auto">
+    <div class="glass p-3">
+      <div class="k mb-1">صوت السويتش</div>
+      <div class="flex flex-wrap gap-1" id="profiles"></div>
+      <div class="k mt-2">حساسية كشف التعليق: <span class="mono" id="thrV">45</span> ms</div>
+      <input id="thr" type="range" min="20" max="80" value="45" class="w-full accent-cyan-400">
+    </div>
+    <div class="glass p-3 flex flex-col gap-2 justify-center">
+      <div class="flex gap-1" id="layouts"><select id="size" class="btn flex-1" aria-label="حجم الكيبورد"></select></div><div class="flex gap-1"><button class="btn flex-1" id="theme">فاتح / داكن</button><button class="btn flex-1" id="view">منظور علوي</button><button class="btn flex-1" id="fs">ملء الشاشة</button></div>
+      <button class="btn" id="test">وضع الفحص: مفعّل</button>
+      <button class="btn" id="reset">تصفير الفحص 🔄</button>
+      <button class="btn" id="exp">تحميل شهادة فحص الهاردوير 🪪</button>
+      <div class="flex gap-1"><button class="btn flex-1" id="share">مشاركة النتيجة 🔗</button><button class="btn flex-1" id="faqb">أسئلة شائعة ❓</button></div>
+      <div class="flex items-center gap-2"><button class="btn" id="mute" aria-label="كتم الصوت">🔊</button><input id="vol" type="range" min="0" max="100" value="80" class="flex-1 accent-cyan-400" aria-label="مستوى الصوت"></div>
+      <div class="k">اضغط أي زر، حرّك الماوس، لفّ العجلة. اسحب المشهد للتدوير. لاختبار لوحة الأرقام فعّل Num Lock.</div>
+    </div>
+    <div class="glass p-3"><div class="k mb-1">سجل التشخيص</div><div id="log" class="overflow-y-auto" style="height:7.5rem"></div></div>
+  </div>
+</div>
+
+<div id="faq" class="fixed inset-0 hidden items-center justify-center p-4" style="background:rgba(0,0,0,.8);z-index:50"><div class="glass p-4 max-w-xl w-full overflow-y-auto" style="max-height:85vh"><h1 class="text-xl font-black mb-2">اختبار الكيبورد والماوس أونلاين</h1><div class="text-sm" style="line-height:1.8"><h2 class="font-bold mt-2">كيف أبدأ الاختبار؟</h2><p>اضغط أي زر في الكيبورد، فإذا أضاء في المشهد ثلاثي الأبعاد فهو سليم. جرّب أزرار الماوس والعجلة وحرّكه لقياس معدل الاستجابة.</p><h2 class="font-bold mt-2">ما هو تعليق السويتش؟</h2><p>هو تسجيل ضغطتين من ضغطة واحدة. تقيس الصفحة الزمن بين ضغطتين لنفس الزر، وإذا قل عن الحد الذي تحدده (20 إلى 80 ms) يتحول الزر إلى الأحمر.</p><h2 class="font-bold mt-2">لماذا لا يضيء زر معين؟</h2><p>قد يكون معطوباً أو متسخاً. بعض الأزرار لا يلتقطها المتصفح مثل Fn، ولوحة الأرقام تحتاج Num Lock مفعّلاً.</p><h2 class="font-bold mt-2">هل بياناتي تُرسل لأي مكان؟</h2><p>لا. كل الفحص يتم داخل متصفحك فقط.</p></div><button class="btn mt-3" id="faqc">إغلاق</button></div></div>
+
+<div id="ov" class="fixed inset-0 hidden items-center justify-center p-4" style="background:rgba(0,0,0,.8);z-index:50">
+  <div class="glass p-3 max-w-xl w-full text-center">
+    <img id="rep" alt="شهادة فحص" class="w-full rounded-lg">
+    <div class="flex gap-2 justify-center mt-2"><a id="dl" download="hardware-report.png" class="btn">حفظ الصورة</a><button class="btn" id="cl">إغلاق</button></div>
+  </div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+<script>
+const $=id=>document.getElementById(id);
+/* ---------- Sound engine ---------- */
+class SwitchSoundEngine{
+  constructor(){this.ctx=null;this.profile='blue'}
+  init(){if(!this.ctx){this.ctx=new(window.AudioContext||window.webkitAudioContext)();this.m=this.ctx.createGain();this.m.gain.value=muted?0:vol;this.m.connect(this.ctx.destination)}
+    if(this.ctx.state==='suspended')this.ctx.resume()}
+  noise(d,g,type,f,q=1,dl=0){const c=this.ctx,n=c.sampleRate*d|0,b=c.createBuffer(1,n,c.sampleRate),a=b.getChannelData(0);
+    for(let i=0;i<n;i++)a[i]=(Math.random()*2-1)*(1-i/n);
+    const s=c.createBufferSource(),fl=c.createBiquadFilter(),G=c.createGain();s.buffer=b;fl.type=type;fl.frequency.value=f;fl.Q.value=q;G.gain.value=g;
+    s.connect(fl);fl.connect(G);G.connect(this.m);s.start(c.currentTime+dl)}
+  tone(f,type,d,g,f2,dl=0,lp=0){const c=this.ctx,t=c.currentTime+dl,o=c.createOscillator(),G=c.createGain();
+    o.type=type;o.frequency.setValueAtTime(f,t);o.frequency.exponentialRampToValueAtTime(Math.max(20,f2||f*.5),t+d);
+    G.gain.setValueAtTime(g,t);G.gain.exponentialRampToValueAtTime(.001,t+d);
+    let n=o;if(lp){const l=c.createBiquadFilter();l.type='lowpass';l.frequency.value=lp;o.connect(l);n=l}
+    n.connect(G);G.connect(this.m);o.start(t);o.stop(t+d+.02)}
+  down(code){if(!this.ctx)return;const p=this.profile;
+    if(p==='blue'){this.noise(.012,.9,'bandpass',2800,6);this.tone(1900,'sine',.03,.12,1200);this.noise(.035,.5,'bandpass',900,1.2,.012);this.tone(220,'triangle',.06,.3,120,.012)}
+    else if(p==='panda'){this.tone(350,'sine',.13,.7,180,0,600);this.tone(180,'triangle',.16,.5,110,0,400);this.noise(.04,.3,'lowpass',500)}
+    else if(p==='red'){this.noise(.03,.35,'lowpass',1400);this.tone(170,'triangle',.05,.25,100)}
+    else{this.noise(.015,.8,'highpass',3500);this.tone(1400,'square',.04,.1,900);this.noise(.05,.3,'bandpass',1800,2,.01);
+      if(code==='Enter')this.bell()}}
+  bell(){this.tone(2637,'sine',.9,.28,2630,.04);this.tone(3951,'sine',.7,.12,3940,.04)}
+  up(){if(!this.ctx)return;const p=this.profile;
+    if(p==='blue')this.noise(.01,.4,'bandpass',3200,5);
+    else if(p==='panda'){this.tone(320,'sine',.05,.2,220,0,500);this.noise(.02,.12,'lowpass',600)}
+    else if(p==='red')this.noise(.015,.12,'lowpass',2000);
+    else this.noise(.01,.3,'highpass',4000)}
+  alert(){if(!this.ctx)return;this.tone(880,'sawtooth',.12,.2,500);this.tone(440,'sawtooth',.2,.2,200,.12)}
+}
+const snd=new SwitchSoundEngine();
+const PROF=[['blue','Cherry MX Blue (Clicky)'],['panda','Holy Panda (Thocky)'],['red','Cherry MX Red (Linear)'],['type','آلة كاتبة كلاسيكية']];
+PROF.forEach(([id,l],i)=>{const b=document.createElement('button');b.className='btn'+(i?'':' on');b.textContent=l;b.onclick=()=>{snd.init();snd.profile=id;document.querySelectorAll('#profiles .btn').forEach(x=>x.classList.remove('on'));b.classList.add('on');snd.down('Space');};$('profiles').appendChild(b)});
+
+/* ---------- Three scene ---------- */
+const R=new THREE.WebGLRenderer({canvas:$('gl'),antialias:true});R.setPixelRatio(Math.min(devicePixelRatio,2));
+const S=new THREE.Scene();S.background=new THREE.Color(0x0f1520);S.fog=new THREE.Fog(0x0f1520,30,70);
+const cam=new THREE.PerspectiveCamera(45,1,.1,100);cam.position.set(3,13,15);
+const oc=new THREE.OrbitControls(cam,R.domElement);oc.target.set(4.5,0,0);oc.enablePan=false;oc.enableZoom=false;oc.enableDamping=true;oc.maxPolarAngle=1.45;
+S.add(new THREE.AmbientLight(0x8899cc,.55));
+const dl=new THREE.DirectionalLight(0xffffff,.8);dl.position.set(5,14,8);S.add(dl);
+const glow=new THREE.PointLight(0x86d3c9,1.5,28);glow.position.set(3,-2.2,0);S.add(glow);
+const floor=new THREE.Mesh(new THREE.PlaneGeometry(80,80),new THREE.MeshStandardMaterial({color:0x172030,metalness:.6,roughness:.5}));floor.rotation.x=-Math.PI/2;floor.position.y=-1.6;S.add(floor);
+const strip=new THREE.MeshBasicMaterial({color:0x86d3c9});
+const metal=new THREE.MeshStandardMaterial({color:0x3a4658,metalness:.7,roughness:.3});
+const base=new THREE.Mesh(new THREE.BoxGeometry(16.4,.8,6.8),metal);base.position.set(0,-.5,0);S.add(base);
+const under=new THREE.Mesh(new THREE.BoxGeometry(16.6,.08,7),strip);under.position.set(0,-1,0);S.add(under);
+
+const items={};let total=0;
+function legend(t){const c=document.createElement('canvas');c.width=c.height=128;const x=c.getContext('2d');x.fillStyle='#dfe6ee';
+  x.font='bold '+(t.length>2?30:58)+'px "JetBrains Mono",monospace';x.textAlign='center';x.textBaseline='middle';x.fillText(t,64,68);return new THREE.CanvasTexture(c)}
+function reg(id,label,grp,mat,travel,extra){items[id]={id,label,grp,mat,travel,y:0,pressed:false,tested:false,fault:false,last:null,...extra};total++}
+const SP={Escape:'Esc',Backspace:'⌫',Tab:'Tab',CapsLock:'Caps',Enter:'Enter',ShiftLeft:'Shift',ShiftRight:'Shift',ControlLeft:'Ctrl',ControlRight:'Ctrl',MetaLeft:'Win',AltLeft:'Alt',AltRight:'Alt',Space:'',ArrowUp:'↑',ArrowDown:'↓',ArrowLeft:'←',ArrowRight:'→',Delete:'Del',Backquote:'`',Minus:'-',Equal:'=',BracketLeft:'[',BracketRight:']',Backslash:'\\',Semicolon:';',Quote:"'",Comma:',',Period:'.',Slash:'/'};
+/* Layouts: token = Code[:width[:height]], _ = spacer */
+const ks=s=>[...s].map(c=>'Key'+c).join(' '),dg=[...'1234567890'].map(c=>'Digit'+c).join(' '),fr=Array.from({length:12},(_,i)=>'F'+(i+1)).join(' ');
+const MAIN=[`Escape ${fr} _:2`,`Backquote ${dg} Minus Equal Backspace:2`,`Tab:1.5 ${ks('QWERTYUIOP')} BracketLeft BracketRight Backslash:1.5`,`CapsLock:1.75 ${ks('ASDFGHJKL')} Semicolon Quote Enter:2.25`,`ShiftLeft:2.25 ${ks('ZXCVBNM')} Comma Period Slash ShiftRight:2.75`];
+const BOT={win:'ControlLeft:1.25 MetaLeft:1.25 AltLeft:1.25 Space:6.25 AltRight:1.25 MetaRight:1.25 ContextMenu:1.25 ControlRight:1.25',mac:'ControlLeft:1.25 AltLeft:1.25 MetaLeft:1.5 Space:7 MetaRight:1.5 AltRight:1.25 ControlRight:1.25',win75:'ControlLeft:1.25 MetaLeft:1.25 AltLeft:1.25 Space:6.25 AltRight:1 ControlRight:1 ArrowLeft ArrowDown ArrowRight',macbook:'ControlLeft:1.25 AltLeft:1.25 MetaLeft:1.5 Space:5.25 MetaRight:1.5 AltRight:1.25 ArrowLeft ArrowDown ArrowRight'};
+const NAV=['PrintScreen ScrollLock Pause','Insert Home PageUp','Delete End PageDown','_:3','_:1 ArrowUp _:1','ArrowLeft ArrowDown ArrowRight'];
+const NUM=['_:4','NumLock NumpadDivide NumpadMultiply NumpadSubtract','Numpad7 Numpad8 Numpad9 NumpadAdd:1:2','Numpad4 Numpad5 Numpad6','Numpad1 Numpad2 Numpad3 NumpadEnter:1:2','Numpad0:2 NumpadDecimal'];
+const SZS={full:{fk:1,nav:1,num:1},tkl:{fk:1,nav:1},'75':{fk:1,ar:1,col:1},'65':{ar:1,col:1},'60':{},laptop:{fk:1,ar:1}},COL=['Delete','PageUp','PageDown','Home','End'];
+const parse=s=>s.split(' ').map(t=>{const[p,w,h]=t.split(':');return[p==='_'?null:p,w?+w:1,h?+h:0]});
+let kbObjs=[],LBL={},mode='',curW=15;
+function setMode(m){mode=m;const[os,sz]=m.split(':'),mac=os==='mac';
+  kbObjs.forEach(o=>{o.traverse(n=>{if(n.material&&n.material.map)n.material.map.dispose()});S.remove(o)});kbObjs=[];
+  Object.keys(items).forEach(k=>{if(!k.startsWith('Mouse'))delete items[k]});total=Object.keys(items).length;held.clear();maxHeld=0;
+  LBL={PrintScreen:'Prt',ScrollLock:'Scr',Pause:'Pau',Insert:'Ins',PageUp:'PgUp',PageDown:'PgDn',NumLock:'Num',NumpadDivide:'/',NumpadMultiply:'*',NumpadSubtract:'-',NumpadAdd:'+',NumpadEnter:'Ent',NumpadDecimal:'.',ContextMenu:'☰',MetaLeft:'Win',MetaRight:'Win'};
+  for(let i=0;i<10;i++)LBL['Numpad'+i]=''+i;
+  if(mac)Object.assign(LBL,{Backspace:'delete',Enter:'return',ControlLeft:'⌃',ControlRight:'⌃',AltLeft:'⌥',AltRight:'⌥',MetaLeft:'⌘',MetaRight:'⌘',Delete:'⌦',Insert:'help',NumLock:'clear'});
+  const z=SZS[sz],off=z.fk?0:1;
+  const base0=(z.fk?MAIN:MAIN.slice(1)).concat(z.ar?(mac?BOT.macbook:BOT.win75):BOT[os]);
+  if(!z.fk)base0[0]=base0[0].replace('Backquote','Escape');
+  const rows=base0.map((s,i)=>{if(z.ar&&i===4-off)s=s.replace('ShiftRight:2.75','ShiftRight:1.75 ArrowUp');
+    if(z.nav)s+=' _:.5 '+(mac&&i===0?'F13 F14 F15':NAV[i]);
+    if(z.num)s+=' _:.5 '+NUM[i];
+    if(z.col&&i<5)s+=' '+COL[i];return parse(s)});
+  const W=Math.max(...rows.map(r=>r.reduce((a,k)=>a+k[1],0)));
+  buildKeys(rows,-W/2);
+  curW=W;base.scale.x=(W+1.4)/16.4;under.scale.x=(W+1.6)/16.6;glow.distance=W*1.6;mg.position.x=W/2+3.4;
+  cam.position.set(2.2,W*.7+2.5,W*.95+.75);oc.target.set(2.2,0,0);
+  document.querySelectorAll('#layouts .btn').forEach(b=>b.classList.toggle('on',b.dataset.m===os));
+  stats();log('التخطيط: '+os+' / '+sz,'var(--cyan)')}
+const capGeo={};
+function buildKeys(rows,x0){rows.forEach((row,r)=>{let x=x0;const z=-2.55+r*1.0+(r?.15:0);
+  row.forEach(([code,w,h])=>{if(!code){x+=w;return}
+    const mat=new THREE.MeshStandardMaterial({color:0x2e394b,roughness:.55,metalness:.1,emissive:0x000000});
+    const g=new THREE.Group();g.position.set(x+w/2,0,z+(h?(h-1)/2:0));
+    const a=new THREE.Mesh(new THREE.BoxGeometry(w-.07,.34,h?h-.08:.92),mat);a.position.y=.17;
+    const b=new THREE.Mesh(new THREE.BoxGeometry(w-.3,.08,h?h-.36:.64),mat);b.position.y=.38;
+    const lab=LBL[code]!==undefined?LBL[code]:SP[code]!==undefined?SP[code]:code.startsWith('Key')?code[3]:code.startsWith('Digit')?code[5]:code;
+    const p=new THREE.Mesh(new THREE.PlaneGeometry(.8,.8),new THREE.MeshBasicMaterial({map:legend(lab),transparent:true}));p.rotation.x=-Math.PI/2;p.position.y=.425;
+    g.add(a,b,p);S.add(g);kbObjs.push(g);reg(code,lab||'Space',g,mat,.18);x+=w})})}
+
+/* Mouse */
+const mg=new THREE.Group();mg.position.set(11.8,0,.4);S.add(mg);
+const mb=new THREE.Mesh(new THREE.SphereGeometry(1,32,24),new THREE.MeshStandardMaterial({color:0x2e394b,roughness:.4,metalness:.3}));mb.scale.set(1.15,.55,1.9);mb.position.y=-.05;mg.add(mb);
+function mbtn(id,label,w,h,d,x,y,z){const m=new THREE.MeshStandardMaterial({color:0x435069,roughness:.4,emissive:0});const g=new THREE.Group();g.position.set(x,y,z);
+  g.add(new THREE.Mesh(new THREE.BoxGeometry(w,h,d),m));mg.add(g);reg(id,label,g,m,.07);return g}
+mbtn('Mouse0','Left Click',.7,.12,.95,-.4,.46,-.7);mbtn('Mouse2','Right Click',.7,.12,.95,.4,.46,-.7);
+mbtn('Mouse3','M4',.14,.12,.4,-1.0,.15,-.1);mbtn('Mouse4','M5',.14,.12,.4,-1.0,.15,.5);
+const wm=new THREE.MeshStandardMaterial({color:0x444c6e,roughness:.6,emissive:0});
+const wheel=new THREE.Mesh(new THREE.CylinderGeometry(.2,.2,.3,16),wm);wheel.rotation.z=Math.PI/2;
+const wg=new THREE.Group();wg.position.set(0,.5,-.75);wg.add(wheel);mg.add(wg);reg('Mouse1','Scroll Wheel',wg,wm,.05);
+
+function paint(it){const m=it.mat;setChip(it.id,it.fault?'f':it.pressed?'p':it.tested?'t':'');
+  if(it.fault)m.emissive.set(0xea9090),m.emissiveIntensity=.7;
+  else if(it.pressed)m.emissive.set(0x86d3c9),m.emissiveIntensity=.8;
+  else if(it.tested)m.emissive.set(0x93c9a4),m.emissiveIntensity=.4;
+  else m.emissive.set(0x000000)}
+function resize(){R.setSize(innerWidth,innerHeight);cam.aspect=innerWidth/innerHeight;cam.fov=innerWidth<innerHeight?70:45;cam.updateProjectionMatrix()}
+addEventListener('resize',resize);resize();
+let hue=.5;
+(function loop(){requestAnimationFrame(loop);
+  for(const k in items){const i=items[k],t=i.pressed?-i.travel:0;i.y+=(t-i.y)*.35;i.grp.position.y=(i.id.startsWith('Mouse')?(i.id==='Mouse3'||i.id==='Mouse4'?.15:i.id==='Mouse1'?.5:.46):0)+i.y}
+  const hh=.55+Math.sin(performance.now()/8000)*.12;strip.color.setHSL(hh,.45,.6);glow.color.setHSL(hh,.45,.6);
+  oc.update();R.render(S,cam)})();
+
+/* ---------- Diagnostics ---------- */
+let thr=45,testing=true,held=new Set(),maxHeld=0,scrollJumps=0;
+const logEl=$('log');
+function log(msg,c){const d=document.createElement('div');d.style.color=c||'var(--text)';d.innerHTML=msg;logEl.prepend(d);while(logEl.children.length>40)logEl.lastChild.remove()}
+function stats(){const v=Object.values(items),t=v.filter(i=>i.tested).length,f=v.filter(i=>i.fault).length;
+  const kb=v.filter(i=>!i.id.startsWith('Mouse')),ms=v.filter(i=>i.id.startsWith('Mouse'));$('mTested').textContent=kb.filter(i=>i.tested).length+'/'+kb.length;$('mFault').textContent=kb.filter(i=>i.fault).length;$('mMouse').textContent='ماوس '+ms.filter(i=>i.tested).length+'/'+ms.length;$('mNk').textContent=maxHeld;$('mScroll').textContent='قفزات السكرول: '+scrollJumps}
+function press(id){const it=items[id];if(!it||it.pressed)return;snd.init();
+  const now=performance.now(),dt=it.last==null?null:now-it.last;it.last=now;it.pressed=true;held.add(id);
+  maxHeld=Math.max(maxHeld,held.size);
+  if(dt!=null){$('mDt').textContent=dt.toFixed(1)+' ms';
+    if(dt<thr){it.fault=true;snd.alert();log(`⚠ تعليق في <b class="mono">${it.label}</b> بفارق <b class="mono">${dt.toFixed(1)} ms</b>`,'var(--rose)')}}
+  if(!it.fault)snd.down(id==='Enter'?'Enter':id);
+  paint(it);stats()}
+function release(id){const it=items[id];if(!it||!it.pressed)return;it.pressed=false;it.tested=true;held.delete(id);snd.up();paint(it);stats()}
+const free=e=>e.target.closest&&e.target.closest('.hud,#ov');
+addEventListener('keydown',e=>{if(testing)e.preventDefault();if(e.repeat)return;$('lkKey').textContent=e.key===' '?'Space':e.key;$('lkCode').textContent='code: '+e.code;$('lkKc').textContent='keyCode: '+e.keyCode;if(!items[e.code]&&testing)log('مفتاح غير مرسوم: '+e.code,'var(--mut)');press(e.code)});
+addEventListener('keyup',e=>{if(testing)e.preventDefault();if(e.code==='PrintScreen')press(e.code);release(e.code)});
+addEventListener('blur',()=>{[...held].forEach(release)});
+let uiDown=false;const BM=[1,4,2];
+const XB=e=>e.button===3||e.button===4;
+['pointerdown','mousedown'].forEach(t=>addEventListener(t,e=>{if(XB(e)&&!free(e)){if(testing)e.preventDefault();press('Mouse'+e.button)}},true));
+['pointerup','mouseup'].forEach(t=>addEventListener(t,e=>{if(XB(e)&&!free(e)){if(testing)e.preventDefault();release('Mouse'+e.button)}},true));
+addEventListener('auxclick',e=>{if(testing&&XB(e))e.preventDefault()},true);
+function syncBtn(e){if(e.pointerType!=='mouse'||uiDown)return;BM.forEach((m,i)=>{(e.buttons&m)?press('Mouse'+i):release('Mouse'+i)})}
+addEventListener('pointerdown',e=>{if(free(e)){uiDown=true;return}if(testing)e.preventDefault();syncBtn(e)},true);
+addEventListener('pointermove',syncBtn,true);
+addEventListener('pointerup',e=>{if(uiDown){if(!e.buttons)uiDown=false;return}syncBtn(e)},true);
+addEventListener('pointercancel',()=>{uiDown=false;BM.forEach((m,i)=>release('Mouse'+i))},true);
+
+addEventListener('contextmenu',e=>{if(testing&&!free(e))e.preventDefault()});
+/* scroll */
+let lastDir=0,run=0,lastW=0;
+addEventListener('wheel',e=>{if(free(e))return;if(testing)e.preventDefault();snd.init();
+  const dir=Math.sign(e.deltaY),now=performance.now(),it=items.Mouse1;if(!dir)return;
+  wheel.rotation.x+=e.deltaY*.01;setChip(dir<0?'ScrU':'ScrD','t');it.mat.emissive.set(0x86d3c9);it.mat.emissiveIntensity=.8;
+  setTimeout(()=>paint(it),90);
+  if(lastDir&&dir!==lastDir&&run>=3&&now-lastW<120){scrollJumps++;setChip('ScrU','f');setChip('ScrD','f');snd.alert();log('⚠ قفزة عكسية في السكرول (Encoder flicker)','var(--rose)')}
+  run=dir===lastDir?run+1:1;lastDir=dir;lastW=now;stats()},{passive:false});
+/* polling */
+let cnt=0,tStart=performance.now(),peak=0;
+addEventListener('pointermove',e=>{if(e.pointerType!=='mouse')return;setChip('Move','t');cnt+=e.getCoalescedEvents?Math.max(1,e.getCoalescedEvents().length):1});
+setInterval(()=>{const now=performance.now(),hz=cnt/((now-tStart)/1000);cnt=0;tStart=now;
+  $('mHzLive').textContent='live: '+Math.round(hz)+' Hz';
+  if(hz>peak){peak=hz;const s=[125,250,500,1000].reduce((a,b)=>Math.abs(b-hz)<Math.abs(a-hz)?b:a);$('mHz').textContent='~'+s+' Hz'}},250);
+
+/* controls */
+$('thr').oninput=e=>{thr=+e.target.value;$('thrV').textContent=thr};
+$('test').onclick=e=>{testing=!testing;e.target.textContent='وضع الفحص: '+(testing?'مفعّل':'متوقف');e.target.classList.toggle('on',!testing)};
+$('reset').onclick=()=>{Object.values(items).forEach(i=>{i.pressed=i.tested=i.fault=false;i.last=null;paint(i)});held.clear();maxHeld=0;scrollJumps=0;peak=0;setChip('ScrU','');setChip('ScrD','');setChip('Move','');$('mDt').textContent='— ms';$('mHz').textContent='— Hz';logEl.innerHTML='';stats();log('تم تصفير الفحص','var(--cyan)')};
+$('cl').onclick=()=>{$('ov').style.display='none'};
+$('exp').onclick=()=>{
+  const v=Object.values(items),keys=v.filter(i=>!i.id.startsWith('Mouse')),mice=v.filter(i=>i.id.startsWith('Mouse'));
+  const tested=v.filter(i=>i.tested).length,faults=v.filter(i=>i.fault).length,mf=mice.filter(i=>i.fault).length+scrollJumps;
+  const c=document.createElement('canvas');c.width=900;c.height=520;const x=c.getContext('2d');
+  const g=x.createLinearGradient(0,0,900,520);g.addColorStop(0,'#101722');g.addColorStop(1,'#1b2535');x.fillStyle=g;x.fillRect(0,0,900,520);
+  x.strokeStyle='#86d3c9';x.lineWidth=2;x.strokeRect(14,14,872,492);
+  x.direction='rtl';x.textAlign='right';x.fillStyle='#e8ecff';x.font='900 34px Cairo, sans-serif';x.fillText('شهادة فحص الهاردوير',860,80);
+  x.font='500 14px "JetBrains Mono", monospace';x.fillStyle='#8b93b5';x.fillText(new Date().toLocaleString('en-GB'),860,110);
+  const rowsR=[['إجمالي المفاتيح المفحوصة',tested+' / '+total,'#10B981'],['أقصى ضغطات متزامنة (NKRO)',maxHeld,'#CCFF00'],['عدد السويتشات المعطوبة',faults,faults?'#FF0055':'#10B981'],['معدل استجابة الماوس',$('mHz').textContent,'#CCFF00'],['صحة الماوس',mf?'يحتاج فحص ('+mf+')':'سليم ✓',mf?'#FF0055':'#10B981']];
+  rowsR.forEach(([a,b,col],i)=>{const y=190+i*58;x.fillStyle='rgba(255,255,255,.05)';x.fillRect(40,y-34,820,48);
+    x.fillStyle='#e8ecff';x.font='700 22px Cairo, sans-serif';x.textAlign='right';x.fillText(a,840,y);
+    x.fillStyle=({'#10B981':'#93c9a4','#CCFF00':'#e8d5a5','#FF0055':'#ea9090'})[col];x.font='800 24px "JetBrains Mono", monospace';x.textAlign='left';x.fillText(String(b),60,y)});
+  x.textAlign='center';x.fillStyle='#8b93b5';x.font='500 14px Cairo, sans-serif';x.fillText('المعمل التكتيكي ثلاثي الأبعاد للكيبورد والماوس',450,490);
+  const u=c.toDataURL('image/png');$('rep').src=u;$('dl').href=u;$('ov').style.display='flex'};
+const chips={};
+[['Mouse0','كليك يسار'],['Mouse2','كليك يمين'],['Mouse1','ضغط العجلة'],['Mouse3','M4 رجوع'],['Mouse4','M5 أمام'],['ScrU','سكرول ↑'],['ScrD','سكرول ↓'],['Move','حركة الماوس']].forEach(([id,l])=>{const s=document.createElement('span');s.className='chip';s.textContent=l;$('mouseHud').appendChild(s);chips[id]=s});
+function setChip(id,st){const c=chips[id];if(c)c.className='chip '+st}
+let OS=/Mac|iPhone|iPad/.test(navigator.platform||navigator.userAgent)?'mac':'win',SZ=OS==='mac'?'laptop':'full';
+const apply=()=>setMode(OS+':'+SZ);
+[['win','Windows'],['mac','Mac']].forEach(([id,l])=>{const b=document.createElement('button');b.className='btn flex-1';b.textContent=l;b.dataset.m=id;b.onclick=()=>{OS=id;apply()};$('layouts').appendChild(b)});
+[['full','Full 100%'],['tkl','TKL 80%'],['75','75%'],['65','65%'],['60','60%'],['laptop','Laptop']].forEach(([id,l])=>{const o=document.createElement('option');o.value=id;o.textContent=l;$('size').appendChild(o)});
+$('size').value=SZ;$('size').onchange=e=>{SZ=e.target.value;apply()};
+$('theme').onclick=()=>{const l=document.documentElement.classList.toggle('light');S.background.set(l?0xf2efe9:0x0f1520);S.fog.color.set(l?0xf2efe9:0x0f1520);floor.material.color.set(l?0xe2ddd3:0x172030);glow.intensity=l?.5:1.5};
+$('fs').onclick=()=>{(document.fullscreenElement?document.exitFullscreen():document.documentElement.requestFullscreen()).catch(()=>{})};
+$('view').onclick=()=>{const W=curW;cam.position.set(2.2,W*.9+.5,.5);oc.target.set(2.2,0,0)};
+let vol=.8,muted=false;
+const setVol=()=>{if(snd.m)snd.m.gain.value=muted?0:vol;$('mute').textContent=muted?'🔇':'🔊'};
+$('vol').oninput=e=>{vol=e.target.value/100;muted=false;setVol()};
+$('mute').onclick=()=>{muted=!muted;setVol()};
+$('faqb').onclick=()=>{$('faq').style.display='flex'};
+$('faqc').onclick=()=>{$('faq').style.display='none'};
+$('share').onclick=async()=>{const v=Object.values(items),t=v.filter(i=>i.tested).length,f=v.filter(i=>i.fault).length;
+  const txt='فحصت الكيبورد والماوس على المعمل ثلاثي الأبعاد: '+t+'/'+v.length+' زر مفحوص، '+f+' أعطال، أقصى ضغطات متزامنة '+maxHeld+'، الماوس '+$('mHz').textContent;
+  try{if(navigator.share){await navigator.share({title:document.title,text:txt,url:location.href});return}}catch(e){}
+  try{await navigator.clipboard.writeText(txt+' '+location.href);log('تم نسخ النتيجة ✓','var(--emerald)')}catch(e){log(txt,'var(--cyan)')}};
+if(matchMedia('(prefers-color-scheme: light)').matches)$('theme').click();
+apply();
+log('جاهز. اضغط أي زر للبدء.','var(--cyan)');
+</script>
+</body>
+</html>
